@@ -114,7 +114,12 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let i = 0; i < ROWS; i++) {
             for (let j = 0; j < COLS; j++) {
                 const index = i * COLS + j;
-                cells[index].className = 'cell ' + board[i][j];
+                // Set the cell class based on the board state
+                if (board[i][j] !== EMPTY) {
+                    cells[index].className = 'cell ' + board[i][j];
+                } else {
+                    cells[index].className = 'cell empty';
+                }
             }
         }
     }
@@ -260,19 +265,25 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Lock the piece in place
     function lockPiece() {
+        // Check if currentPiece exists - safety check
+        if (!currentPiece) return;
+        
         currentPiece.shape.forEach((row, i) => {
             row.forEach((value, j) => {
                 if (value) {
                     const x = currentPiece.x + j;
                     const y = currentPiece.y + i;
-                    if (y >= 0) {
+                    if (y >= 0 && y < ROWS && x >= 0 && x < COLS) {
                         board[y][x] = currentPiece.type;
-                    } else {
+                    } else if (y < 0) {
                         gameOver = true;
                     }
                 }
             });
         });
+        
+        // Redraw the board to show locked pieces
+        drawBoard();
         
         // Check for completed lines
         checkCompleteLines();
@@ -283,7 +294,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ghostPiece = getGhostPiece();
         
         // Check if new piece immediately collides
-        if (checkCollision(currentPiece, 0, 0)) {
+        if (currentPiece && checkCollision(currentPiece, 0, 0)) {
             gameOver = true;
         }
         
@@ -372,11 +383,24 @@ document.addEventListener('DOMContentLoaded', () => {
     function hardDrop() {
         if (!currentPiece || gameOver || isPaused) return;
         
-        while (movePiece(0, 1)) {
-            score += 2; // 2 points per cell dropped
+        let dropDistance = 0;
+        // Move the piece down until it hits something
+        while (!checkCollision(currentPiece, 0, 1)) {
+            currentPiece.y++;
+            dropDistance++;
         }
         
-        updateScore();
+        // Award points for the hard drop
+        if (dropDistance > 0) {
+            score += dropDistance * 2; // 2 points per cell dropped
+            updateScore();
+        }
+        
+        // Lock the piece in place immediately
+        lockPiece();
+        
+        // Force redraw to show the locked piece
+        drawBoard();
     }
     
     // Game loop
@@ -437,10 +461,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 movePiece(1, 0);
                 break;
             case 'ArrowDown':
+                // Try to move down, if successful add points
                 if (movePiece(0, 1)) {
                     score += 1; // 1 point for soft drop
                     updateScore();
                 }
+                // Note: if movePiece returns false, it automatically locks the piece if it can't move down
                 break;
             case 'ArrowUp':
                 currentPiece = rotatePiece(currentPiece);
