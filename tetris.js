@@ -17,10 +17,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let lines = 0;
     let level = 1;
     let gameOver = false;
+    let paused = false;
     let dropInterval = 1000; // Starting speed (ms)
     let lastDropTime = 0;
     let requestId = null;
-    
     // DOM elements
     const scoreElement = document.getElementById('score');
     const levelElement = document.getElementById('level');
@@ -34,6 +34,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const rightBtn = document.getElementById('rightBtn');
     const rotateBtn = document.getElementById('rotateBtn');
     const dropBtn = document.getElementById('dropBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const returnBtn = document.getElementById('returnBtn');
     
     // Tetromino colors
     const colors = [
@@ -117,6 +119,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Draw board
         drawBoard();
         
+        // Draw ghost piece (shadow at landing position)
+        drawGhostPiece();
+        
         // Draw current piece
         drawPiece(ctx, currentPiece, piecePosition.x, piecePosition.y, BLOCK_SIZE);
         
@@ -141,19 +146,48 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // Draw a tetromino piece
-    function drawPiece(context, piece, offsetX, offsetY, blockSize) {
+    function drawPiece(context, piece, offsetX, offsetY, blockSize, isGhost = false) {
         piece.forEach((row, y) => {
             row.forEach((value, x) => {
                 if (value !== 0) {
-                    context.fillStyle = colors[value];
-                    context.fillRect((offsetX + x) * blockSize, (offsetY + y) * blockSize, blockSize, blockSize);
+                    if (isGhost) {
+                        // For ghost piece, use semi-transparent color
+                        context.fillStyle = colors[value] + '60'; // 60 is 37.5% opacity in hex
+                        context.strokeStyle = colors[value] + '90'; // 90 is 56.25% opacity in hex
+                    } else {
+                        context.fillStyle = colors[value];
+                        context.strokeStyle = '#222';
+                    }
                     
-                    context.strokeStyle = '#222';
+                    context.fillRect((offsetX + x) * blockSize, (offsetY + y) * blockSize, blockSize, blockSize);
                     context.lineWidth = 1;
                     context.strokeRect((offsetX + x) * blockSize, (offsetY + y) * blockSize, blockSize, blockSize);
                 }
             });
         });
+    }
+    
+    // Draw the ghost piece (shadow) where the piece would land
+    function drawGhostPiece() {
+        // Find ghost position (how far the piece can drop)
+        let ghostY = 0;
+        
+        // Keep checking each row down until we find a collision
+        while (!checkCollision(0, ghostY + 1)) {
+            ghostY++;
+        }
+        
+        // Only draw ghost if it's not at the same position as current piece
+        if (ghostY > 0) {
+            drawPiece(
+                ctx,
+                currentPiece,
+                piecePosition.x,
+                piecePosition.y + ghostY,
+                BLOCK_SIZE,
+                true // isGhost parameter
+            );
+        }
     }
     
     // Draw the next piece preview
@@ -309,9 +343,40 @@ document.addEventListener('DOMContentLoaded', () => {
         gameOverModal.style.display = 'flex';
     }
     
+    // Draw pause overlay
+    function drawPauseOverlay() {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.font = '24px Arial';
+        ctx.fillStyle = 'white';
+        ctx.textAlign = 'center';
+        ctx.fillText('PAUSED', canvas.width / 2, canvas.height / 2);
+        ctx.font = '16px Arial';
+        ctx.fillText('Press Return to continue', canvas.width / 2, canvas.height / 2 + 30);
+    }
+    
+    // Toggle pause state
+    function togglePause() {
+        if (gameOver) return;
+        
+        paused = !paused;
+        
+        if (paused) {
+            // Pause the game
+            cancelAnimationFrame(requestId);
+            // Show pause overlay
+            drawPauseOverlay();
+        } else {
+            // Resume the game
+            lastDropTime = performance.now();
+            requestId = requestAnimationFrame(gameLoop);
+        }
+    }
+    
     // Game loop
     function gameLoop(timestamp) {
-        if (gameOver) return;
+        if (gameOver || paused) return;
         
         const deltaTime = timestamp - lastDropTime;
         
@@ -344,6 +409,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 break;
             case ' ':
                 hardDrop();
+                break;
+            case 'p':
+            case 'P':
+                togglePause();
                 break;
         }
     });
@@ -388,6 +457,15 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Restart button
     restartBtn.addEventListener('click', reset);
+    
+    // Pause and Return buttons
+    pauseBtn.addEventListener('click', () => {
+        if (!gameOver) togglePause();
+    });
+    
+    returnBtn.addEventListener('click', () => {
+        if (paused) togglePause();
+    });
     
     // Add swipe controls for mobile
     let touchStartX = 0;

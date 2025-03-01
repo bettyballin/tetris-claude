@@ -61,10 +61,21 @@ body {
 }
 
 .controls {
-    width: 100%;
+    display: flex;
+    justify-content: center; /* Centers horizontally */
+    align-items: center;
+    width: 50%;
     margin-top: auto;
     padding-bottom: 20px;
 }
+
+.controls-legend ul {
+    margin: 10px;
+    list-style-type: none; /* Removes bullets */
+    padding: 0;           /* Removes default padding */
+    margin: 0;            /* Removes default margin */
+}
+
 
 .control-buttons {
     display: flex;
@@ -146,6 +157,23 @@ button:active {
     display: block;
 }
 
+#pauseBtn, #returnBtn {
+    width: auto;
+    height: auto;
+    border-radius: 10px;
+    padding: 10px;
+    font-size: 16px;
+    margin: 10px;
+    background-color: #FF0D72; 
+    box-shadow: 0 5px #FF0D72;
+}
+
+
+#pauseBtn:active, #returnBtn:active {
+    box-shadow: 0 2px inherit;
+    transform: translateY(3px);
+}
+
 @media (max-height: 600px) {
     .game-header {
         margin-bottom: 5px;
@@ -182,7 +210,7 @@ button:active {
     }
     
     .controls {
-        width: 35%;
+        width: 10%;
         padding-left: 10px;
     }
 }
