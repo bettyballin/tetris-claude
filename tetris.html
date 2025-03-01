@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mobile Tetris</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-header">
+            <div class="score-container">
+                <div class="score-label">Score:</div>
+                <div id="score">0</div>
+            </div>
+            <div class="level-container">
+                <div class="level-label">Level:</div>
+                <div id="level">1</div>
+            </div>
+            <div class="lines-container">
+                <div class="lines-label">Lines:</div>
+                <div id="lines">0</div>
+            </div>
+        </div>
+        
+        <div class="game-area-container">
+            <canvas id="game" width="300" height="600"></canvas>
+            <div class="next-piece-container">
+                <div class="next-label">Next:</div>
+                <canvas id="nextPiece" width="100" height="100"></canvas>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <div class="control-buttons">
+                <button id="leftBtn">←</button>
+                <div class="up-down">
+                    <button id="rotateBtn">↻</button>
+                    <button id="dropBtn">↓</button>
+                </div>
+                <button id="rightBtn">→</button>
+            </div>
+        </div>
+        
+        <div id="gameOverModal" class="modal">
+            <div class="modal-content">
+                <h2>Game Over!</h2>
+                <p>Your final score: <span id="finalScore">0</span></p>
+                <button id="restartBtn">Play Again</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="tetris.js"></script>
+</body>
+</html>
